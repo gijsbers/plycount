@@ -1,0 +1,103 @@
+.TH PLYCOUNT 1 "October 2026" "plycount 1.0" "User Commands"
+.SH NAME
+plycount \- add, update, or verify PlyCount tags in PGN chess databases
+.SH SYNOPSIS
+.B plycount
+[\fIoptions\fR]
+.I INPUT OUTPUT
+.br
+.B plycount --verify
+[\fIoptions\fR]
+.I INPUT
+.SH DESCRIPTION
+.B plycount
+is a command-line utility for chess games stored in Portable Game Notation
+(PGN) files and databases. It adds or updates the \fBPlyCount\fR tag for each
+selected game and can verify existing tags. It streams the PGN input, so large
+chess databases can be processed without loading the complete collection into
+memory. The input is never modified in place.
+.SH OPTIONS
+.TP
+.B --verify
+Check \fBPlyCount\fR tags instead of writing an output file. Verification
+continues after ordinary tag discrepancies.
+.TP
+.B --limit N
+Process only the first \fIN\fR games encountered. \fIN\fR must be a positive
+decimal integer. In rewrite mode, only these games are written; in verify mode,
+only these games are checked.
+.TP
+.B --force
+Allow an existing output path to be replaced after successful processing.
+This option is valid only in rewrite mode.
+.TP
+.B --version
+Print version information and exit.
+.TP
+.B --help, -h, -?
+Print usage information and exit.
+.SH "PLYCOUNT SEMANTICS"
+The count is the number of plies in the main line of a chess game as present in
+the PGN record's movetext. One move by one player is one ply. Recursive
+annotation variations (RAVs), comments, numeric or symbolic NAGs, move numbers,
+and game-result tokens are not counted. A FEN fullmove number is not added to
+the count.
+.PP
+The program counts movetext tokens; it does not validate SAN or the legality
+of chess moves, and does not replay moves against a chess position.
+.SH "VERIFY MODE"
+Verify mode checks every selected game even when earlier games have
+discrepancies. A game is classified as correct, missing, mismatched, invalid,
+or duplicate. Duplicate tags are reported as the duplicate category.
+.PP
+At most 100 individual discrepancy diagnostics are printed. Further per-game
+diagnostics are suppressed, but checking continues, all category counters are
+maintained, and the final summary includes all selected games.
+.SH "OUTPUT SAFETY"
+\fIINPUT\fR and \fIOUTPUT\fR must not identify the same file. Existing files are
+checked using file identity and resolved paths. An existing output is refused
+unless \fB--force\fR is specified. The input is opened read-only.
+.PP
+Rewrite output is first written to a uniquely created temporary file in the
+output directory. After processing and closing the stage successfully, it is
+renamed to \fIOUTPUT\fR. A failed run does not publish the staged output.
+.SH PROGRESS
+Long runs may report progress to standard error. Progress is throttled; its
+frequency is not a fixed interface guarantee.
+.SH "EXIT STATUS"
+.TP
+.B 0
+Processing succeeded, or verification completed with no discrepancies.
+.TP
+.B 1
+Verification completed but found one or more \fBPlyCount\fR discrepancies.
+.TP
+.B 2
+Invocation error or fatal processing error.
+.SH EXAMPLES
+Add or update counts in a PGN chess database:
+.PP
+.nf
+plycount games.pgn games-counted.pgn
+.fi
+.PP
+Verify a PGN chess database:
+.PP
+.nf
+plycount --verify games-counted.pgn
+.fi
+.PP
+Process only the first 500 games:
+.PP
+.nf
+plycount --limit 500 games.pgn first-500.pgn
+.fi
+.SH LIMITATIONS
+A single PGN game is limited to 64 MiB in memory. Game boundaries are detected
+from PGN record structure; the program does not perform full PGN grammar or SAN
+legality validation. Output publication can fail if the output directory does
+not permit temporary-file creation or rename.
+.SH LICENSE
+PlyCount is distributed under the GNU General Public License, version 3 only
+(\fBGPL-3.0-only\fR). The complete license text is provided in the project
+\fILICENSE\fR file.
